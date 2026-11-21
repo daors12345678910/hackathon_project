@@ -6,7 +6,7 @@ $server="localhost";
 $dbname="clothesDonation";
 
 try {
-	//Creating a PDO to connect with database
+	
 	$conn =new PDO("mysql:host=$server;dbname=$dbname",$user,$pass);
 } catch (PDOException $e) {
    
