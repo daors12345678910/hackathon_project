@@ -1,132 +1,161 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<meta charset="UTF-8">
-	<title>Document</title>
-	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
-	<link rel="apple-touch-icon" href="/docs/5.1/assets/img/favicons/apple-touch-icon.png" sizes="180x180">
-	<link rel="icon" href="/docs/5.1/assets/img/favicons/favicon-32x32.png" sizes="32x32" type="image/png">
-	<link rel="icon" href="/docs/5.1/assets/img/favicons/favicon-16x16.png" sizes="16x16" type="image/png">
-	<link rel="manifest" href="/docs/5.1/assets/img/favicons/manifest.json">
-	<link rel="mask-icon" href="/docs/5.1/assets/img/favicons/safari-pinned-tab.svg" color="#7952b3">
-	<link rel="icon" href="/docs/5.1/assets/img/favicons/favicon.ico">
-	<style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-		html,
-	body {
-	  height: 100%;
-	}
+    <title>Kind Society | Create account</title>
 
-	body {
-	  display: flex;
-	  align-items: center;
-	  padding-top: 40px;
-	  padding-bottom: 40px;
-	  background-color: #f5f5f5;
-	}
-
-	.form-signin {
-	  width: 100%;
-	  max-width: 330px;
-	  padding: 15px;
-	  margin: auto;
-	}
-
-	.form-signin .checkbox {
-	  font-weight: 400;
-	}
-
-	.form-signin .form-floating:focus-within {
-	  z-index: 2;
-	}
-
-	.form-signin input[type="email"] {
-	  margin-bottom: -1px;
-	  border-bottom-right-radius: 0;
-	  border-bottom-left-radius: 0;
-	}
-
-	.form-signin input[type="password"] {
-	  margin-bottom: 10px;
-	  border-top-left-radius: 0;
-	  border-top-right-radius: 0;
-	}
-	.form-floating{
-		margin: 10px;
-	}
-	</style>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
 </head>
-<body class="text-center">
-<!-- Creating a form which will post us some data in register.php file -->
-<main class="form-signin">
-  <form action="register.php" method="post">
-    <img class="mb-4" src="https://getbootstrap.com/docs/5.1/assets/brand/bootstrap-logo.svg" alt="" width="72" height="57">
-    <h1 class="h3 mb-3 fw-normal">Register</h1>
 
-    <div class="form-floating">
-      <input type="text" class="form-control" id="floatingInput" placeholder="Emri" name="emri" required>
-      <label for="floatingInput">name</label>
-    </div>
-    <div class="form-floating">
-      <input type="text" class="form-control" id="floatingInput" placeholder="Username" name="username" required>
-      <label for="floatingInput">Username</label>
-    </div>
-    <div class="form-floating">
-      <input type="email" class="form-control" id="floatingInput" placeholder="Email" name="email" required>
-      <label for="floatingInput">Email</label>
-    </div>
-    <div class="form-floating">
-      <input type="password" class="form-control" id="floatingInput" placeholder="Password" name="password" required>
-      <label for="floatingInput">Password</label>
-    </div>
-    <div class="form-floating">
-      <input type="password" class="form-control" id="floatingPassword" placeholder="Confirm Password" name="confirm_password" required>
-      <label for="floatingPassword">Confirm Password</label>
-    </div>
+<body class="text-center auth-page">
 
-    <div class="form-floating mb-3">
-    <select class="form-select" name="role" id="role" required>
-        <option value="donor" selected>Donor</option>
-        <option value="charity">Charity</option>
-        <option value="admin">Admin</option>
-    </select>
-    <label for="role">Register as</label>
-</div>
+<div class="auth-layout">
 
-<div class="form-floating mb-3" id="adminCodeField" style="display: none;">
-    <input type="password"
-           class="form-control"
-           name="admin_code"
-           id="admin_code"
-           placeholder="Admin registration code">
-    <label for="admin_code">Admin registration code</label>
+    <aside class="auth-story">
+
+        <a class="auth-brand" href="index.php">
+            <span class="brand-mark">K</span> Kind Society
+        </a>
+
+        <div class="auth-story-copy">
+            <span class="eyebrow">CLOTHING DONATION COMMUNITY</span>
+
+            <h2>Give what you can.<br>Change what you can.</h2>
+
+            <p>
+                Connect generous people with local charities and help good
+                clothes find a new home.
+            </p>
+        </div>
+
+        <div class="auth-story-foot">
+            A little kindness goes a long way.
+        </div>
+
+    </aside>
+
+    <main class="form-signin">
+
+        <form action="register.php" method="post">
+
+            <span class="auth-kicker">JOIN THE COMMUNITY</span>
+
+            <h1 class="h3 mb-3 fw-normal">Create your account</h1>
+
+            <p class="auth-subtitle">
+                Start making a difference in your community.
+            </p>
+
+            <div class="form-floating mb-3">
+                <input type="text" class="form-control"
+                       id="emri" placeholder="Emri"
+                       name="emri" required>
+                <label for="emri">Emri</label>
+            </div>
+
+            <div class="form-floating mb-3">
+                <input type="text" class="form-control"
+                       id="username" placeholder="Username"
+                       name="username" required>
+                <label for="username">Username</label>
+            </div>
+
+            <div class="form-floating mb-3">
+                <input type="email" class="form-control"
+                       id="email" placeholder="Email"
+                       name="email" required>
+                <label for="email">Email</label>
+            </div>
+
+            <!-- Role selection -->
+            <div class="mb-3 text-start">
+                <label for="role" class="form-label">
+                    Choose your account type
+                </label>
+
+                <select class="form-select" name="role"
+                        id="role" required onchange="toggleAdminCode()">
+
+                    <option value="">Select your role</option>
+                    <option value="donor">Donor</option>
+                    <option value="charity">Charity</option>
+                    <option value="admin">Admin</option>
+
+                </select>
+            </div>
+
+            <!-- Admin registration code -->
+            <div class="form-floating mb-3"
+                 id="adminCodeGroup" style="display: none;">
+
+                <input type="password" class="form-control"
+                       id="admin_code" name="admin_code"
+                       placeholder="Admin registration code">
+
+                <label for="admin_code">
+                    Admin registration code
+                </label>
+            </div>
+
+            <div class="form-floating mb-3">
+                <input type="password" class="form-control"
+                       id="password" placeholder="Password"
+                       name="password" required>
+                <label for="password">Password</label>
+            </div>
+
+            <div class="form-floating mb-3">
+                <input type="password" class="form-control"
+                       id="confirm_password"
+                       placeholder="Confirm Password"
+                       name="confirm_password" required>
+                <label for="confirm_password">Confirm Password</label>
+            </div>
+
+            <div class="checkbox mb-3">
+                <label>
+                    <input type="checkbox" value="remember-me">
+                    Remember me
+                </label>
+            </div>
+
+            <button class="w-100 btn btn-lg btn-primary"
+                    type="submit" name="submit">
+                Sign up
+            </button>
+
+            <div class="mt-3">
+                <span>Already have an account? </span>
+                <a href="login.php">Sign in</a>
+            </div>
+
+        </form>
+
+    </main>
+
 </div>
 
 <script>
-document.getElementById('role').addEventListener('change', function () {
-    const adminField = document.getElementById('adminCodeField');
-    const adminCode = document.getElementById('admin_code');
+function toggleAdminCode() {
 
-    if (this.value === 'admin') {
-        adminField.style.display = 'block';
-        adminCode.required = true;
+    const role = document.getElementById('role').value;
+    const adminGroup = document.getElementById('adminCodeGroup');
+    const adminInput = document.getElementById('admin_code');
+
+    if (role === 'admin') {
+        adminGroup.style.display = 'block';
+        adminInput.required = true;
     } else {
-        adminField.style.display = 'none';
-        adminCode.required = false;
-        adminCode.value = '';
+        adminGroup.style.display = 'none';
+        adminInput.required = false;
+        adminInput.value = '';
     }
-});
+}
 </script>
-
-    <div class="checkbox mb-3">
-      <label>
-        <input name="checkbox" type="checkbox" value="remember-me"> Remember me
-      </label>
-    </div>
-    <button class="w-100 btn btn-lg btn-primary" type="submit" name="submit">Sign up</button>
-    <span>Already have an account: </span><a href="login.php">Sign in</a>
-  </form>
-</main>
 
 </body>
 </html>

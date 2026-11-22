@@ -12,7 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $role = $_POST['role'] ?? '';
     $admin_code = $_POST['admin_code'] ?? '';
 
-    // Check that all required fields are filled in
+    // Check required fields
     if (
         $emri === '' ||
         $username === '' ||
@@ -24,22 +24,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         die("Please fill in all fields.");
     }
 
-    // Only these three roles are allowed
+    // Validate role
     if (!in_array($role, ['donor', 'charity', 'admin'], true)) {
         die("Invalid account type.");
     }
 
-    // Check email format
+    // Validate email
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         die("Please enter a valid email address.");
     }
 
-    // Check that both passwords match
+    // Check passwords
     if ($password !== $confirm_password) {
         die("Passwords do not match.");
     }
 
-    // Check the admin registration code
+    // Verify admin registration code
     if ($role === 'admin') {
         if (
             !defined('ADMIN_SIGNUP_CODE') ||
@@ -50,11 +50,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     try {
-        // Check whether the username or email already exists
+
+        // Check if username or email already exists
         $checkSql = "SELECT id FROM users
                      WHERE username = :username OR email = :email";
 
         $checkUser = $conn->prepare($checkSql);
+
         $checkUser->execute([
             ':username' => $username,
             ':email' => $email
@@ -64,14 +66,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             die("Username or email already exists.");
         }
 
-        // Hash both passwords
+        // Hash passwords
         $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+
         $hashedConfirmPassword = password_hash(
             $confirm_password,
             PASSWORD_DEFAULT
         );
 
-        // Save the new account and its selected role
+        // Insert new user
         $sql = "INSERT INTO users
                 (emri, username, email, password, confirm_password, role)
                 VALUES
@@ -88,7 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ':role' => $role
         ]);
 
-        // Registration successful
+        // Redirect after successful registration
         header("Location: login.php");
         exit();
 

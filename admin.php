@@ -3,187 +3,61 @@
 session_start();
 include_once('config.php');
 
-if (!isset($_SESSION['id']) || $_SESSION['role'] !== 'admin') {
-    header("Location: index.php");
+// Only admins can access this page
+if (!isset($_SESSION['id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+    header("Location: login.php");
     exit();
 }
 
-function e($value) {
-    return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
-}
+// Count total users
+$userCount = $conn->query("SELECT COUNT(*) FROM users")->fetchColumn();
 
-// Database statistics
-$totalUsers = $conn->query("SELECT COUNT(*) FROM users")->fetchColumn();
-$totalCharities = $conn->query("SELECT COUNT(*) FROM charity_profiles")->fetchColumn();
-$totalRequests = $conn->query("SELECT COUNT(*) FROM clothing_needed")->fetchColumn();
-$totalDonations = $conn->query("SELECT COUNT(*) FROM donation")->fetchColumn();
+// Count charities
+$charityCount = $conn->query("SELECT COUNT(*) FROM charity_profiles")->fetchColumn();
 
-// All users
-$users = $conn->query(
-    "SELECT id, emri, username, email, role FROM users ORDER BY id DESC"
-)->fetchAll(PDO::FETCH_ASSOC);
+// Count clothing requests
+$requestCount = $conn->query("SELECT COUNT(*) FROM clothing_needed")->fetchColumn();
 
-// All clothing requests
-$requests = $conn->query(
-    "SELECT cn.*, cp.charity_name
-     FROM clothing_needed cn
-     INNER JOIN charity_profiles cp ON cn.charity_id = cp.id
-     ORDER BY cn.request_id DESC"
-)->fetchAll(PDO::FETCH_ASSOC);
-
-// All donations
-$donations = $conn->query(
-    "SELECT d.*, u.username
-     FROM donation d
-     INNER JOIN users u ON d.donor_id = u.id
-     ORDER BY d.donation_id DESC"
-)->fetchAll(PDO::FETCH_ASSOC);
+// Count donations
+$donationCount = $conn->query("SELECT COUNT(*) FROM donation")->fetchColumn();
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ThreadKind | Admin Dashboard</title>
-<link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kind Society | Admin Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
 </head>
-<body>
-
-<header class="topbar">
-    <a href="index.php" class="brand">ThreadKind</a>
-    <nav>
-        <a class="active" href="admin.php">Administration</a>
-        <a href="#users">Users</a>
-        <a href="#requests">Requests</a>
-        <a href="#donations">Donations</a>
-        <a href="logout.php">Logout</a>
-    </nav>
-</header>
-
-<main class="container">
-
-    <section class="welcome">
-        <p class="eyebrow">ADMINISTRATION PORTAL</p>
-        <h1>Welcome, <?= e($_SESSION['emri'] ?? $_SESSION['username']) ?>.</h1>
-        <p>Monitor the activity of your Clothes Donation Match platform.</p>
+<body class="admin-layout">
+<aside class="admin-sidebar">
+    <a class="side-brand" href="admin.php"><span class="brand-mark">K</span><span>Kind Society<small>ADMIN CONSOLE</small></span></a>
+    <div class="side-caption">WORKSPACE</div>
+    <a class="side-link active" href="admin.php">▦ <span>Overview</span></a>
+    <a class="side-link" href="manageUsers.php">♙ <span>Users</span></a>
+    <a class="side-link" href="manageCharities.php">♡ <span>Charities</span></a>
+    <a class="side-link" href="manageRequests.php">▤ <span>Clothing requests</span></a>
+    <a class="side-link" href="manageDonations.php">♧ <span>Donations</span></a>
+    <div class="sidebar-bottom"><div class="side-user"><span class="avatar">A</span><span><strong><?= htmlspecialchars($_SESSION['emri']) ?></strong><small>Administrator</small></span></div><a class="side-logout" href="logout.php">Log out ↗</a></div>
+</aside>
+<main class="admin-main">
+    <header class="admin-topline"><div><span class="eyebrow-dark">ADMINISTRATION</span><h1>Dashboard overview</h1><p>Monitor activity and manage the Kind Society community.</p></div><span class="admin-date">Kind Society · Admin</span></header>
+    <section class="admin-stat-grid">
+        <article class="admin-stat"><span class="stat-icon">♙</span><p>Total users</p><strong><?= $userCount ?></strong><small>Registered accounts</small></article>
+        <article class="admin-stat"><span class="stat-icon">♡</span><p>Charities</p><strong><?= $charityCount ?></strong><small>Community partners</small></article>
+        <article class="admin-stat"><span class="stat-icon">▤</span><p>Clothing requests</p><strong><?= $requestCount ?></strong><small>Active needs listed</small></article>
+        <article class="admin-stat"><span class="stat-icon">♧</span><p>Donations</p><strong><?= $donationCount ?></strong><small>Contributions recorded</small></article>
     </section>
-
-    <section class="admin-stats">
-
-        <article class="stat-card">
-            <span>Total users</span>
-            <strong><?= e($totalUsers) ?></strong>
-        </article>
-
-        <article class="stat-card">
-            <span>Charity profiles</span>
-            <strong><?= e($totalCharities) ?></strong>
-        </article>
-
-        <article class="stat-card">
-            <span>Clothing requests</span>
-            <strong><?= e($totalRequests) ?></strong>
-        </article>
-
-        <article class="stat-card">
-            <span>Donations</span>
-            <strong><?= e($totalDonations) ?></strong>
-        </article>
-
+    <section class="admin-section-head"><div><span class="eyebrow-dark">CONTROL CENTER</span><h2>Manage your platform</h2><p>Choose an area to view and manage its records.</p></div></section>
+    <section class="admin-management-grid">
+        <a class="management-tile" href="manageUsers.php"><span class="tile-icon">♙</span><span class="tile-arrow">↗</span><h3>User accounts</h3><p>View and manage donor, charity, and administrator accounts.</p><span class="tile-action">Manage users</span></a>
+        <a class="management-tile" href="manageCharities.php"><span class="tile-icon">♡</span><span class="tile-arrow">↗</span><h3>Charity profiles</h3><p>Maintain charity information and community partners.</p><span class="tile-action">Manage charities</span></a>
+        <a class="management-tile" href="manageRequests.php"><span class="tile-icon">▤</span><span class="tile-arrow">↗</span><h3>Clothing requests</h3><p>Review, create, update, and remove clothing requests.</p><span class="tile-action">Manage requests</span></a>
+        <a class="management-tile" href="manageDonations.php"><span class="tile-icon">♧</span><span class="tile-arrow">↗</span><h3>Donations</h3><p>Review and manage donations submitted by donors.</p><span class="tile-action">Manage donations</span></a>
     </section>
-
-    <section id="users" class="panel">
-        <h2>Registered users</h2>
-
-        <div class="table-wrap">
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Name</th>
-                        <th>Username</th>
-                        <th>Email</th>
-                        <th>Role</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($users as $user): ?>
-                        <tr>
-                            <td><?= e($user['id']) ?></td>
-                            <td><?= e($user['emri']) ?></td>
-                            <td><?= e($user['username']) ?></td>
-                            <td><?= e($user['email']) ?></td>
-                            <td><?= e($user['role']) ?></td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
-    </section>
-
-    <section id="requests" class="panel">
-        <h2>Clothing requests</h2>
-
-        <div class="table-wrap">
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Charity</th>
-                        <th>Category</th>
-                        <th>Description</th>
-                        <th>Quantity</th>
-                        <th>Urgency</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($requests as $request): ?>
-                        <tr>
-                            <td><?= e($request['request_id']) ?></td>
-                            <td><?= e($request['charity_name']) ?></td>
-                            <td><?= e($request['category']) ?></td>
-                            <td><?= e($request['description']) ?></td>
-                            <td><?= e($request['quantity']) ?></td>
-                            <td><?= e($request['urgency']) ?></td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
-    </section>
-
-    <section id="donations" class="panel">
-        <h2>All donations</h2>
-
-        <div class="table-wrap">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Donation ID</th>
-                        <th>Donor</th>
-                        <th>Request ID</th>
-                        <th>Description</th>
-                        <th>Quantity</th>
-                        <th>Date</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($donations as $donation): ?>
-                        <tr>
-                            <td><?= e($donation['donation_id']) ?></td>
-                            <td><?= e($donation['username']) ?></td>
-                            <td><?= e($donation['request_id']) ?></td>
-                            <td><?= e($donation['description']) ?></td>
-                            <td><?= e($donation['quantity']) ?></td>
-                            <td><?= e($donation['date']) ?></td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
-    </section>
-
+    <footer class="admin-footer">Kind Society · Making generosity easier, one donation at a time.</footer>
 </main>
 </body>
 </html>

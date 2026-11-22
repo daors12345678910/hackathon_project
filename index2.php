@@ -5,16 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#176b52" />
   <title>ThreadKind — Clothes Donation Match</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+ 
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <aside class="sidebar">
     <a class="brand" href="#" aria-label="ThreadKind home">
       <span class="brand-mark"><span></span><span></span></span>
-      <span>ThreadKind</span>
+      <span>KindSociety</span>
     </a>
 
     <nav class="nav-list" aria-label="Main navigation">

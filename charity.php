@@ -96,13 +96,13 @@ $myDonations = $donations->fetchAll(PDO::FETCH_ASSOC);
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ThreadKind | Charity Dashboard</title>
+<title>Kind Society | Charity Dashboard</title>
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
 <header class="topbar">
-    <a href="index.php" class="brand">ThreadKind</a>
+    <a href="index.php" class="brand">Kind Society</a>
     <nav>
         <a class="active" href="charity.php">My dashboard</a>
         <a href="#requests">My requests</a>

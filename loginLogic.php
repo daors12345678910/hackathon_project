@@ -1,79 +1,51 @@
-<?php 
 
-	session_start();
+<?php
+session_start();
 
-	include_once('config.php');
+include_once('config.php');
 
-	$_SESSION['id'] = $data['id'];
-$_SESSION['role'] = $data['role'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-	if(isset($_POST['submit']))
-	{
-		
-		$username = $_POST['username'];
+    $username = trim($_POST['username'] ?? '');
+    $password = $_POST['password'] ?? '';
 
-		
-		$password = $_POST['password'];
+    if (empty($username) || empty($password)) {
+        die("Please fill in all fields.");
+    }
 
-		
-		if (empty($username) || empty($password)) {
+    // Find the user in the database
+    $sql = "SELECT id, emri, username, email, password, role
+            FROM users
+            WHERE username = :username";
 
-			
-			echo "Please fill in all fields
-			";
+    $selectUser = $conn->prepare($sql);
 
-		}
-		else{
+    $selectUser->execute([
+        ':username' => $username
+    ]);
 
-			
-			$sql = "SELECT id, emri, username, email, password, role
-        FROM users
-        WHERE username = :username";
+    // Fetch the user's information
+    $data = $selectUser->fetch(PDO::FETCH_ASSOC);
 
-			
-			
-			
+    if (!$data) {
+        die("The user does not exist.");
+    }
 
-			$selectUser->bindParam(":username", $username);
+    // Check the password
+    if (password_verify($password, $data['password'])) {
 
-			
-$selectUser = $conn->prepare($sql);
-$selectUser->execute([':username' => $username]);
-$data = $selectUser->fetch(PDO::FETCH_ASSOC);
+        // Save user information in the session
+        $_SESSION['id'] = $data['id'];
+        $_SESSION['username'] = $data['username'];
+        $_SESSION['email'] = $data['email'];
+        $_SESSION['emri'] = $data['emri'];
+        $_SESSION['role'] = $data['role'];
 
+        header("Location: redirect.php");
+        exit();
 
-			if ($data == false) {
-				
-
-				
-				echo "The user does not exist
-				";
-			}else{
-
-		
-				if (password_verify($password, $data['password'])) {
-					
-					$_SESSION['id'] = $data['id'];
-$_SESSION['username'] = $data['username'];
-$_SESSION['email'] = $data['email'];
-$_SESSION['emri'] = $data['emri'];
-$_SESSION['role'] = $data['role'];
-
-header("Location: redirect.php");
-exit();
-				}
-				else{
-					
-					echo "The password is not valid
-					";
-				}
-
-			}
-
-		}
-
-
-	}
-
-
- ?>
+    } else {
+        die("The password is not valid.");
+    }
+}
+?>

@@ -5,6 +5,8 @@ $pass="";
 $server="localhost";
 $dbname="clothesDonation";
 
+define('ADMIN_SIGNUP_CODE', 'KindSocietyAdmin2026!');
+
 try {
 	
 	$conn =new PDO("mysql:host=$server;dbname=$dbname",$user,$pass);
