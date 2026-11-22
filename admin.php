@@ -58,6 +58,103 @@ $donationCount = $conn->query("SELECT COUNT(*) FROM donation")->fetchColumn();
         <a class="management-tile" href="manageDonations.php"><span class="tile-icon">♧</span><span class="tile-arrow">↗</span><h3>Donations</h3><p>Review and manage donations submitted by donors.</p><span class="tile-action">Manage donations</span></a>
     </section>
     <footer class="admin-footer">Kind Society · Making generosity easier, one donation at a time.</footer>
+
+<style>
+    /* Make dark text white throughout admin management pages */
+.admin-content,
+.admin-content h1,
+.admin-content h2,
+.admin-content h3,
+.admin-content h4,
+.admin-content h5,
+.admin-content p,
+.admin-content label,
+.admin-content span,
+.admin-content th,
+.admin-content td,
+.admin-content a,
+.admin-content strong,
+.admin-content small {
+    color: #ffffff !important;
+}
+
+/* Form labels and input text */
+.admin-content input,
+.admin-content select,
+.admin-content textarea {
+    color: #ffffff !important;
+}
+
+/* Dropdown options */
+.admin-content select option {
+    background-color: #1f2937;
+    color: #ffffff;
+}
+
+/* Placeholder text */
+.admin-content input::placeholder,
+.admin-content textarea::placeholder {
+    color: #d1d5db !important;
+}
+
+/* Table text */
+.admin-content table {
+    color: #ffffff !important;
+
+    
+}
+
+/* FORCE WHITE TEXT ON ALL ADMIN MANAGEMENT PAGES */
+
+body,
+body h1,
+body h2,
+body h3,
+body h4,
+body h5,
+body h6,
+body p,
+body label,
+body span,
+body strong,
+body small,
+body th,
+body td,
+body a,
+body li,
+body legend,
+body .form-label,
+body .card-title,
+body .card-text,
+body .modal-title {
+    color: #ffffff !important;
+}
+
+/* Form fields */
+body input,
+body select,
+body textarea {
+    color: #ffffff !important;
+}
+
+/* Dropdown options */
+body select option {
+    background: #1e293b !important;
+    color: #ffffff !important;
+}
+
+/* Placeholders */
+body input::placeholder,
+body textarea::placeholder {
+    color: #d1d5db !important;
+}
+
+/* Bootstrap table text */
+body .table,
+body .table th,
+body .table td {
+    color: #ffffff !important;
+}</style>
 </main>
 </body>
 </html>

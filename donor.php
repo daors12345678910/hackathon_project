@@ -3,6 +3,10 @@
 session_start();
 include_once('config.php');
 
+/* -------------------------------------------------
+   DONOR ACCESS
+------------------------------------------------- */
+
 if (
     !isset($_SESSION['id']) ||
     !isset($_SESSION['role']) ||
@@ -140,11 +144,8 @@ $cityCoordinates = [
     'prishtina' => [42.6629, 21.1655],
     'prizren'   => [42.2139, 20.7397],
     'peja'      => [42.6591, 20.2883],
-    'pejë'      => [42.6591, 20.2883],
     'gjakova'   => [42.3803, 20.4308],
-    'gjakovë'   => [42.3803, 20.4308],
     'mitrovica' => [42.8914, 20.8659],
-    'mitrovicë' => [42.8914, 20.8659],
     'ferizaj'   => [42.3702, 21.1553],
     'gjilan'    => [42.4635, 21.4694],
     'vushtrri'  => [42.8231, 20.9675],
@@ -156,21 +157,65 @@ $cityCoordinates = [
     'shtime'    => [42.4331, 21.0397]
 ];
 
+/* -------------------------------------------------
+   NORMALIZE CITY NAMES
+------------------------------------------------- */
+
+function normalizeCity($city) {
+
+    $city = trim((string)$city);
+
+    $city = mb_strtolower($city, 'UTF-8');
+
+    // Remove accents from letters such as ë
+    $converted = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $city);
+
+    if ($converted !== false) {
+        $city = $converted;
+    }
+
+    // Remove spaces, commas, and other characters
+    $city = preg_replace('/[^a-z]/', '', $city);
+
+    return $city;
+}
+
+/* -------------------------------------------------
+   LOAD ALL CHARITIES FOR THE MAP
+------------------------------------------------- */
+
+/*
+   This query is independent of clothing_needed.
+   Every registered charity with a recognized city
+   can appear on the map, even without a request.
+*/
+
+$charityMapStmt = $conn->prepare("
+    SELECT id, charity_name, description, city
+    FROM charity_profiles
+    WHERE city IS NOT NULL
+      AND TRIM(city) <> ''
+    ORDER BY charity_name ASC
+");
+
+$charityMapStmt->execute();
+
+$allCharities = $charityMapStmt->fetchAll(PDO::FETCH_ASSOC);
+
 $mapLocations = [];
 
-foreach ($requests as $request) {
+foreach ($allCharities as $charity) {
 
-    $city = mb_strtolower(trim($request['city'] ?? ''), 'UTF-8');
+    $cityKey = normalizeCity($charity['city']);
 
-    if (isset($cityCoordinates[$city])) {
+    if (isset($cityCoordinates[$cityKey])) {
 
         $mapLocations[] = [
-            'name' => $request['charity_name'],
-            'city' => $request['city'],
-            'category' => $request['category'],
-            'description' => $request['description'],
-            'urgency' => $request['urgency'],
-            'coordinates' => $cityCoordinates[$city]
+            'id' => (int)$charity['id'],
+            'name' => $charity['charity_name'],
+            'city' => $charity['city'],
+            'description' => $charity['description'],
+            'coordinates' => $cityCoordinates[$cityKey]
         ];
     }
 }
@@ -191,10 +236,6 @@ foreach ($requests as $request) {
 
 <style>
 
-/* -------------------------------------------------
-   GENERAL
-------------------------------------------------- */
-
 * {
     margin: 0;
     padding: 0;
@@ -211,9 +252,7 @@ a {
     text-decoration: none;
 }
 
-/* -------------------------------------------------
-   NAVIGATION
-------------------------------------------------- */
+/* NAVIGATION */
 
 .topbar {
     height: 76px;
@@ -249,9 +288,7 @@ a {
     color: white;
 }
 
-/* -------------------------------------------------
-   MAIN LAYOUT
-------------------------------------------------- */
+/* MAIN LAYOUT */
 
 .container {
     width: 86%;
@@ -259,9 +296,7 @@ a {
     margin: 0 auto;
 }
 
-/* -------------------------------------------------
-   WELCOME
-------------------------------------------------- */
+/* WELCOME */
 
 .welcome {
     padding: 55px 0 35px;
@@ -288,9 +323,7 @@ a {
     line-height: 1.6;
 }
 
-/* -------------------------------------------------
-   ALERTS
-------------------------------------------------- */
+/* ALERTS */
 
 .message {
     padding: 14px 18px;
@@ -311,9 +344,7 @@ a {
     border-left: 4px solid #d94a4a;
 }
 
-/* -------------------------------------------------
-   SEARCH AND FILTERS
-------------------------------------------------- */
+/* SEARCH AND FILTERS */
 
 .filter-section {
     background: white;
@@ -374,9 +405,7 @@ a {
     font-weight: 700;
 }
 
-/* -------------------------------------------------
-   MAP
-------------------------------------------------- */
+/* MAP */
 
 .map-section {
     margin-bottom: 48px;
@@ -425,9 +454,7 @@ a {
     margin-top: 10px;
 }
 
-/* -------------------------------------------------
-   MARKETPLACE HEADING
-------------------------------------------------- */
+/* MARKETPLACE HEADING */
 
 .section-heading {
     display: flex;
@@ -448,9 +475,7 @@ a {
     font-size: 13px;
 }
 
-/* -------------------------------------------------
-   MARKETPLACE LIST
-------------------------------------------------- */
+/* MARKETPLACE LIST */
 
 .marketplace-list {
     background: white;
@@ -568,9 +593,7 @@ a {
     font-size: 11px;
 }
 
-/* -------------------------------------------------
-   EMPTY STATE
-------------------------------------------------- */
+/* EMPTY STATE */
 
 .empty {
     padding: 40px 20px;
@@ -581,9 +604,7 @@ a {
     border-radius: 9px;
 }
 
-/* -------------------------------------------------
-   DONATION HISTORY
-------------------------------------------------- */
+/* DONATION HISTORY */
 
 .history-section {
     margin-top: 60px;
@@ -634,9 +655,7 @@ a {
     color: #78847c;
 }
 
-/* -------------------------------------------------
-   RESPONSIVE DESIGN
-------------------------------------------------- */
+/* RESPONSIVE DESIGN */
 
 @media (max-width: 1050px) {
 
@@ -735,8 +754,6 @@ a {
 
 <body>
 
-<!-- NAVIGATION -->
-
 <header class="topbar">
 
     <a class="brand" href="index.php">Kind Society</a>
@@ -749,10 +766,7 @@ a {
 
 </header>
 
-
 <main class="container">
-
-    <!-- WELCOME -->
 
     <section class="welcome">
 
@@ -766,9 +780,6 @@ a {
         </p>
 
     </section>
-
-
-    <!-- NOTIFICATIONS -->
 
     <?php if (isset($_GET['success'])): ?>
 
@@ -785,7 +796,6 @@ a {
         </div>
 
     <?php endif; ?>
-
 
     <!-- SEARCH -->
 
@@ -835,28 +845,23 @@ a {
 
             </select>
 
-            <button type="submit" class="primary-btn">
-                Search
-            </button>
+            <button type="submit" class="primary-btn">Search</button>
 
-            <a href="donor.php" class="reset-btn">
-                Clear filters
-            </a>
+            <a href="donor.php" class="reset-btn">Clear filters</a>
 
         </form>
 
     </section>
 
-
-    <!-- MAP -->
+    <!-- CHARITY MAP -->
 
     <section class="map-section">
 
         <div class="map-heading">
 
             <div>
-                <h2>Find requests near you</h2>
-                <p>Explore charity locations across Kosovo.</p>
+                <h2>Find charities near you</h2>
+                <p>Explore all registered charity locations across Kosovo.</p>
             </div>
 
             <span class="map-count">
@@ -873,7 +878,6 @@ a {
 
     </section>
 
-
     <!-- MARKETPLACE REQUESTS -->
 
     <section class="marketplace-section">
@@ -886,21 +890,17 @@ a {
 
         </div>
 
-
         <?php if (count($requests) > 0): ?>
 
             <div class="marketplace-list">
 
                 <div class="market-header">
-
                     <span>Clothing request</span>
                     <span>Category</span>
                     <span>Location</span>
                     <span>Priority</span>
                     <span>Make a donation</span>
-
                 </div>
-
 
                 <?php foreach ($requests as $request): ?>
 
@@ -928,24 +928,15 @@ a {
 
                         </div>
 
-
                         <div class="market-info">
-
                             <strong>Category</strong>
-
                             <?= e(ucfirst($request['category'])) ?>
-
                         </div>
-
 
                         <div class="market-info">
-
                             <strong>Location</strong>
-
                             <?= e($request['city']) ?>
-
                         </div>
-
 
                         <div class="market-info">
 
@@ -964,7 +955,6 @@ a {
                             </span>
 
                         </div>
-
 
                         <form method="POST" class="donation-form">
 
@@ -985,14 +975,12 @@ a {
                             >
 
                             <select name="clothing_size" required title="Clothing size">
-
                                 <option value="XS">XS</option>
                                 <option value="S">S</option>
                                 <option value="M" selected>M</option>
                                 <option value="L">L</option>
                                 <option value="XL">XL</option>
                                 <option value="XXL">XXL</option>
-
                             </select>
 
                             <button type="submit" name="donate" class="primary-btn">
@@ -1016,7 +1004,6 @@ a {
         <?php endif; ?>
 
     </section>
-
 
     <!-- DONATION HISTORY -->
 
@@ -1067,7 +1054,6 @@ a {
 
 </main>
 
-
 <!-- LEAFLET MAP -->
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -1079,21 +1065,13 @@ const charityLocations = <?= json_encode(
     JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP
 ) ?>;
 
-
-// Initialize map
 const map = L.map('charityMap').setView([42.6026, 20.9030], 8);
 
-
-// OpenStreetMap tiles
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-
     attribution: '&copy; OpenStreetMap contributors',
     maxZoom: 19
-
 }).addTo(map);
 
-
-// Escape text before displaying it in popups
 function escapeHTML(value) {
 
     return String(value ?? '').replace(/[&<>"']/g, function(character) {
@@ -1110,8 +1088,6 @@ function escapeHTML(value) {
 
 }
 
-
-// Add markers
 const markers = [];
 
 charityLocations.forEach(function(location) {
@@ -1122,8 +1098,6 @@ charityLocations.forEach(function(location) {
         <div>
             <h3>${escapeHTML(location.name)}</h3>
             <p><strong>City:</strong> ${escapeHTML(location.city)}</p>
-            <p><strong>Category:</strong> ${escapeHTML(location.category)}</p>
-            <p><strong>Priority:</strong> ${escapeHTML(location.urgency)}</p>
             <p>${escapeHTML(location.description)}</p>
         </div>
     `);
@@ -1132,8 +1106,6 @@ charityLocations.forEach(function(location) {
 
 });
 
-
-// Fit map to all markers
 if (markers.length > 0) {
 
     const group = L.featureGroup(markers);
@@ -1142,12 +1114,12 @@ if (markers.length > 0) {
 
 }
 
-
-// Correct map dimensions after page loads
 window.addEventListener('load', function() {
+
     setTimeout(function() {
         map.invalidateSize();
     }, 300);
+
 });
 
 </script>
