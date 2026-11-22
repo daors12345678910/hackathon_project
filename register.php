@@ -1,58 +1,99 @@
+
 <?php
+include_once('config.php');
 
-	include_once('config.php');
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-	if(isset($_POST['submit']))
-	{
+    $emri = trim($_POST['emri'] ?? '');
+    $username = trim($_POST['username'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $password = $_POST['password'] ?? '';
+    $confirm_password = $_POST['confirm_password'] ?? '';
+    $role = $_POST['role'] ?? '';
+    $admin_code = $_POST['admin_code'] ?? '';
 
-		$emri = $_POST['emri'];
-		$username = $_POST['username'];
-		$email = $_POST['email'];
+    // Check that all required fields are filled in
+    if (
+        $emri === '' ||
+        $username === '' ||
+        $email === '' ||
+        $password === '' ||
+        $confirm_password === '' ||
+        $role === ''
+    ) {
+        die("Please fill in all fields.");
+    }
 
-		$tempPass = $_POST['password'];
-		$password = password_hash($tempPass, PASSWORD_DEFAULT);
+    // Only these three roles are allowed
+    if (!in_array($role, ['donor', 'charity', 'admin'], true)) {
+        die("Invalid account type.");
+    }
 
+    // Check email format
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        die("Please enter a valid email address.");
+    }
 
+    // Check that both passwords match
+    if ($password !== $confirm_password) {
+        die("Passwords do not match.");
+    }
 
-		$tempConfirm = $_POST['confirm_password'];
+    // Check the admin registration code
+    if ($role === 'admin') {
+        if (
+            !defined('ADMIN_SIGNUP_CODE') ||
+            !hash_equals(ADMIN_SIGNUP_CODE, $admin_code)
+        ) {
+            die("Incorrect admin registration code.");
+        }
+    }
 
-		if ($tempPass !== $tempConfirm) {
-    	echo "Passwords do not match.";
-		} else {
-    	$password = password_hash($tempPass, PASSWORD_DEFAULT);
-    	$confirm_password = $password;
-		}
+    try {
+        // Check whether the username or email already exists
+        $checkSql = "SELECT id FROM users
+                     WHERE username = :username OR email = :email";
 
-		if(empty($emri) || empty($username) || empty($email) || empty($password) || empty($confirm_password))
-		{
-			echo "You have not filled in all the fields.";
-		}
-		else
-		{
+        $checkUser = $conn->prepare($checkSql);
+        $checkUser->execute([
+            ':username' => $username,
+            ':email' => $email
+        ]);
 
-		$sql = "INSERT INTO users(emri,username,email,password, confirm_password)
-        VALUES (:emri, :username, :email, :password, :confirm_password)";
+        if ($checkUser->fetch()) {
+            die("Username or email already exists.");
+        }
 
-			$insertSql = $conn->prepare($sql);
-			
+        // Hash both passwords
+        $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+        $hashedConfirmPassword = password_hash(
+            $confirm_password,
+            PASSWORD_DEFAULT
+        );
 
-			$insertSql->bindParam(':emri', $emri);
-			$insertSql->bindParam(':username', $username);
-			$insertSql->bindParam(':email', $email);
-			$insertSql->bindParam(':password', $password);
-			$insertSql->bindParam(':confirm_password', $confirm_password);
+        // Save the new account and its selected role
+        $sql = "INSERT INTO users
+                (emri, username, email, password, confirm_password, role)
+                VALUES
+                (:emri, :username, :email, :password, :confirm_password, :role)";
 
-			$insertSql->execute();
+        $registerUser = $conn->prepare($sql);
 
-			header("Location: login.php");
-			exit;
+        $registerUser->execute([
+            ':emri' => $emri,
+            ':username' => $username,
+            ':email' => $email,
+            ':password' => $hashedPassword,
+            ':confirm_password' => $hashedConfirmPassword,
+            ':role' => $role
+        ]);
 
+        // Registration successful
+        header("Location: login.php");
+        exit();
 
-		}
-
-
-
-	}
-
-
+    } catch (PDOException $e) {
+        die("Registration failed. Please try again.");
+    }
+}
 ?>
