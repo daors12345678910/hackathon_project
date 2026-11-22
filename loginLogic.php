@@ -1,6 +1,7 @@
 
 <?php
 session_start();
+
 include_once('config.php');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -8,70 +9,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = trim($_POST['username'] ?? '');
     $password = $_POST['password'] ?? '';
 
-    if ($username === '' || $password === '') {
-        die("Please enter your username and password.");
+    if (empty($username) || empty($password)) {
+        die("Please fill in all fields.");
     }
 
-    try {
+    // Find the user in the database
+    $sql = "SELECT id, emri, username, email, password, role
+            FROM users
+            WHERE username = :username";
 
-        // Find user by username
-        $sql = "SELECT * FROM users WHERE username = :username";
+    $selectUser = $conn->prepare($sql);
 
-        $selectUser = $conn->prepare($sql);
+    $selectUser->execute([
+        ':username' => $username
+    ]);
 
-        $selectUser->bindParam(':username', $username);
+    // Fetch the user's information
+    $data = $selectUser->fetch(PDO::FETCH_ASSOC);
 
-        $selectUser->execute();
-
-        // Get user information
-        $data = $selectUser->fetch(PDO::FETCH_ASSOC);
-
-        // Check whether user exists and password is correct
-        if (
-    $data &&
-    (
-        password_verify($password, $data['password']) ||
-        $password === $data['password']
-    )
-) {
-            // Save user information in session
-            $_SESSION['id'] = $data['id'];
-            $_SESSION['username'] = $data['username'];
-            $_SESSION['emri'] = $data['emri'];
-            $_SESSION['role'] = $data['role'];
-
-            // Redirect according to role
-            if ($data['role'] === 'admin') {
-                header("Location: admin.php");
-                exit();
-            }
-
-            if ($data['role'] === 'donor') {
-                header("Location: donor.php");
-                exit();
-            }
-
-            if ($data['role'] === 'charity') {
-                header("Location: charity.php");
-                exit();
-            }
-
-        } else {
-
-            die("Incorrect username or password.");
-
-        }
-
-    } catch (PDOException $e) {
-
-        die("Login failed. Please try again.");
-
+    if (!$data) {
+        die("The user does not exist.");
     }
 
-} else {
+    // Check the password
+    if (password_verify($password, $data['password'])) {
 
-    header("Location: login.php");
-    exit();
+        // Save user information in the session
+        $_SESSION['id'] = $data['id'];
+        $_SESSION['username'] = $data['username'];
+        $_SESSION['email'] = $data['email'];
+        $_SESSION['emri'] = $data['emri'];
+        $_SESSION['role'] = $data['role'];
 
+        header("Location: redirect.php");
+        exit();
+
+    } else {
+        die("The password is not valid.");
+    }
 }
 ?>
