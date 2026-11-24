@@ -1,4 +1,3 @@
-
 <?php
 session_start();
 include_once('config.php');
@@ -20,6 +19,60 @@ function e($value) {
     return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
 }
 
+function allowedSizesForCategory($category) {
+
+    $category = strtolower(trim($category));
+
+    // Support both old and new category names.
+    $categoryAliases = [
+        'clothing' => 'clothes',
+        'clothes' => 'clothes',
+
+        'coat' => 'coats',
+        'coats' => 'coats',
+
+        'shoes' => 'footwear',
+        'shoe' => 'footwear',
+        'footwear' => 'footwear',
+
+        'hat' => 'hats',
+        'hats' => 'hats',
+
+        'accessories' => 'accessory',
+        'accessory' => 'accessory'
+    ];
+
+    $category = $categoryAliases[$category] ?? $category;
+
+    $sizesByCategory = [
+
+        'clothes' => [
+            'XS', 'S', 'M', 'L', 'XL', 'XXL'
+        ],
+
+        'coats' => [
+            'XS', 'S', 'M', 'L', 'XL', 'XXL'
+        ],
+
+        'footwear' => [
+            'EU 36', 'EU 37', 'EU 38', 'EU 39',
+            'EU 40', 'EU 41', 'EU 42', 'EU 43',
+            'EU 44', 'EU 45', 'EU 46'
+        ],
+
+        'hats' => [
+            'One Size', 'S', 'M', 'L', 'XL'
+        ],
+
+        'accessory' => [
+            'One Size'
+        ]
+
+    ];
+
+    return $sizesByCategory[$category] ?? [];
+}
+
 /* -------------------------------------------------
    PROCESS DONATION
 ------------------------------------------------- */
@@ -30,12 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['donate'])) {
     $quantity = (int)($_POST['quantity'] ?? 0);
     $size = trim($_POST['clothing_size'] ?? '');
 
-    if (
-        $request_id > 0 &&
-        $quantity > 0 &&
-        $quantity <= 100 &&
-        in_array($size, ['XS', 'S', 'M', 'L', 'XL', 'XXL'], true)
-    ) {
+    if ($request_id > 0 && $quantity > 0 && $quantity <= 100) {
 
         $check = $conn->prepare(
             "SELECT category FROM clothing_needed WHERE request_id = :id"
@@ -45,26 +93,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['donate'])) {
         $request = $check->fetch(PDO::FETCH_ASSOC);
 
         if ($request) {
+            $allowedSizes = allowedSizesForCategory($request['category']);
 
-            $sql = "INSERT INTO donation
-                    (request_id, donor_id, description, date, image, quantity, clothing_size)
-                    VALUES
-                    (:request_id, :donor_id, :description, :date, :image, :quantity, :size)";
+            if (in_array($size, $allowedSizes, true)) {
 
-            $stmt = $conn->prepare($sql);
+                $sql = "INSERT INTO donation
+                        (request_id, donor_id, description, date, image, quantity, clothing_size)
+                        VALUES
+                        (:request_id, :donor_id, :description, :date, :image, :quantity, :size)";
 
-            $stmt->execute([
-                ':request_id' => $request_id,
-                ':donor_id' => $_SESSION['id'],
-                ':description' => $request['category'],
-                ':date' => date('Y-m-d'),
-                ':image' => '',
-                ':quantity' => $quantity,
-                ':size' => $size
-            ]);
+                $stmt = $conn->prepare($sql);
 
-            header("Location: donor.php?success=1");
-            exit();
+                $stmt->execute([
+                    ':request_id' => $request_id,
+                    ':donor_id' => $_SESSION['id'],
+                    ':description' => $request['category'],
+                    ':date' => date('Y-m-d'),
+                    ':image' => '',
+                    ':quantity' => $quantity,
+                    ':size' => $size
+                ]);
+
+                header("Location: donor.php?success=1");
+                exit();
+            }
         }
     }
 
@@ -140,21 +192,44 @@ $donations = $history->fetchAll(PDO::FETCH_ASSOC);
 ------------------------------------------------- */
 
 $cityCoordinates = [
-    'pristina'  => [42.6629, 21.1655],
-    'prishtina' => [42.6629, 21.1655],
-    'prizren'   => [42.2139, 20.7397],
-    'peja'      => [42.6591, 20.2883],
-    'gjakova'   => [42.3803, 20.4308],
-    'mitrovica' => [42.8914, 20.8659],
-    'ferizaj'   => [42.3702, 21.1553],
-    'gjilan'    => [42.4635, 21.4694],
-    'vushtrri'  => [42.8231, 20.9675],
-    'podujeva'  => [42.9106, 21.1931],
-    'rahovec'   => [42.3994, 20.6547],
-    'suhareka'  => [42.3586, 20.8250],
-    'malisheva' => [42.4822, 20.7458],
-    'kamenica'  => [42.5781, 21.5803],
-    'shtime'    => [42.4331, 21.0397]
+    'decan' => [42.5403, 20.2883],
+    'dragash' => [42.0265, 20.6547],
+    'drenas' => [42.6283, 20.8939],
+    'ferizaj' => [42.3702, 21.1553],
+    'fushekosove' => [42.6394, 21.0961],
+    'gjakove' => [42.3803, 20.4308],
+    'gjilan' => [42.4635, 21.4694],
+    'gracanice' => [42.6022, 21.1958],
+    'hanielezit' => [42.1500, 21.2960],
+    'istog' => [42.7808, 20.4875],
+    'junik' => [42.4758, 20.2772],
+    'kacanik' => [42.2319, 21.2594],
+    'kamenice' => [42.5781, 21.5803],
+    'kline' => [42.6217, 20.5778],
+    'kllokot' => [42.3714, 21.3747],
+    'leposaviq' => [43.1039, 20.8028],
+    'lipjan' => [42.5217, 21.1258],
+    'malisheve' => [42.4822, 20.7458],
+    'mamushe' => [42.3306, 20.7258],
+    'mitroviceejugut' => [42.8914, 20.8659],
+    'mitroviceeveriut' => [42.8939, 20.8667],
+    'novoberde' => [42.6117, 21.4194],
+    'obiliq' => [42.6869, 21.0703],
+    'partesh' => [42.4017, 21.4339],
+    'peje' => [42.6591, 20.2883],
+    'podujeve' => [42.9106, 21.1931],
+    'prishtine' => [42.6629, 21.1655],
+    'prizren' => [42.2139, 20.7397],
+    'rahovec' => [42.3994, 20.6547],
+    'ranillug' => [42.4922, 21.6067],
+    'shtime' => [42.4331, 21.0397],
+    'shterpce' => [42.2394, 21.0272],
+    'skenderaj' => [42.7467, 20.7883],
+    'suhareke' => [42.3586, 20.8250],
+    'viti' => [42.3214, 21.3583],
+    'vushtrri' => [42.8231, 20.9675],
+    'zubinpotok' => [42.9144, 20.6897],
+    'zvecan' => [42.9075, 20.8403]
 ];
 
 /* -------------------------------------------------
@@ -162,33 +237,23 @@ $cityCoordinates = [
 ------------------------------------------------- */
 
 function normalizeCity($city) {
-
     $city = trim((string)$city);
-
     $city = mb_strtolower($city, 'UTF-8');
 
-    // Remove accents from letters such as ë
+    // Convert Albanian letters such as ë and ç to ASCII equivalents.
     $converted = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $city);
 
     if ($converted !== false) {
         $city = $converted;
     }
 
-    // Remove spaces, commas, and other characters
-    $city = preg_replace('/[^a-z]/', '', $city);
-
-    return $city;
+    // Remove spaces and all characters except letters.
+    return preg_replace('/[^a-z]/', '', $city);
 }
 
 /* -------------------------------------------------
    LOAD ALL CHARITIES FOR THE MAP
 ------------------------------------------------- */
-
-/*
-   This query is independent of clothing_needed.
-   Every registered charity with a recognized city
-   can appear on the map, even without a request.
-*/
 
 $charityMapStmt = $conn->prepare("
     SELECT id, charity_name, description, city
@@ -199,7 +264,6 @@ $charityMapStmt = $conn->prepare("
 ");
 
 $charityMapStmt->execute();
-
 $allCharities = $charityMapStmt->fetchAll(PDO::FETCH_ASSOC);
 
 $mapLocations = [];
@@ -217,6 +281,7 @@ foreach ($allCharities as $charity) {
             'description' => $charity['description'],
             'coordinates' => $cityCoordinates[$cityKey]
         ];
+
     }
 }
 
@@ -583,7 +648,7 @@ a {
 }
 
 .donation-form select {
-    width: 75px;
+    width: 90px;
 }
 
 .donation-form button {
@@ -956,6 +1021,14 @@ a {
 
                         </div>
 
+                        <?php
+                        $donationSizes = allowedSizesForCategory($request['category']);
+                        $requestedSize = trim($request['clothing_size'] ?? '');
+                        $selectedSize = in_array($requestedSize, $donationSizes, true)
+                            ? $requestedSize
+                            : ($donationSizes[0] ?? '');
+                        ?>
+
                         <form method="POST" class="donation-form">
 
                             <input
@@ -974,13 +1047,15 @@ a {
                                 title="Quantity to donate"
                             >
 
-                            <select name="clothing_size" required title="Clothing size">
-                                <option value="XS">XS</option>
-                                <option value="S">S</option>
-                                <option value="M" selected>M</option>
-                                <option value="L">L</option>
-                                <option value="XL">XL</option>
-                                <option value="XXL">XXL</option>
+                            <select name="clothing_size" required title="Donation size">
+                                <?php foreach ($donationSizes as $sizeOption): ?>
+                                    <option
+                                        value="<?= e($sizeOption) ?>"
+                                        <?= $selectedSize === $sizeOption ? 'selected' : '' ?>
+                                    >
+                                        <?= e($sizeOption) ?>
+                                    </option>
+                                <?php endforeach; ?>
                             </select>
 
                             <button type="submit" name="donate" class="primary-btn">

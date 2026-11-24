@@ -1,9 +1,12 @@
-
 <?php
 session_start();
 include_once('config.php');
 
-if (!isset($_SESSION['id']) || $_SESSION['role'] !== 'charity') {
+if (
+    !isset($_SESSION['id']) ||
+    !isset($_SESSION['role']) ||
+    $_SESSION['role'] !== 'charity'
+) {
     header("Location: index.php");
     exit();
 }
@@ -12,7 +15,62 @@ function e($value) {
     return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
 }
 
-// Find the charity profile belonging to this user
+/* Each category has its own valid size choices. */
+function allowedSizesForCategory($category) {
+
+    $category = strtolower(trim($category));
+
+    // Support both old and new category names.
+    $categoryAliases = [
+        'clothing' => 'clothes',
+        'clothes' => 'clothes',
+
+        'coat' => 'coats',
+        'coats' => 'coats',
+
+        'shoes' => 'footwear',
+        'shoe' => 'footwear',
+        'footwear' => 'footwear',
+
+        'hat' => 'hats',
+        'hats' => 'hats',
+
+        'accessories' => 'accessory',
+        'accessory' => 'accessory'
+    ];
+
+    $category = $categoryAliases[$category] ?? $category;
+
+    $sizesByCategory = [
+
+        'clothes' => [
+            'XS', 'S', 'M', 'L', 'XL', 'XXL'
+        ],
+
+        'coats' => [
+            'XS', 'S', 'M', 'L', 'XL', 'XXL'
+        ],
+
+        'footwear' => [
+            'EU 36', 'EU 37', 'EU 38', 'EU 39',
+            'EU 40', 'EU 41', 'EU 42', 'EU 43',
+            'EU 44', 'EU 45', 'EU 46'
+        ],
+
+        'hats' => [
+            'One Size', 'S', 'M', 'L', 'XL'
+        ],
+
+        'accessory' => [
+            'One Size'
+        ]
+
+    ];
+
+    return $sizesByCategory[$category] ?? [];
+}
+
+// Find the charity profile belonging to this user.
 $stmt = $conn->prepare(
     "SELECT * FROM charity_profiles WHERE user_id = :user_id"
 );
@@ -23,25 +81,33 @@ if (!$charity) {
     die("Your charity profile has not been connected to your account. Please contact the administrator.");
 }
 
-// Publish a request
+// Publish a request.
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['publish'])) {
 
-    $category = trim($_POST['category']);
-    $description = trim($_POST['description']);
-    $urgency = trim($_POST['urgency']);
-    $date = $_POST['date'];
-    $quantity = (int)$_POST['quantity'];
-    $size = trim($_POST['size']);
+    $category = trim($_POST['category'] ?? '');
+    $description = trim($_POST['description'] ?? '');
+    $urgency = trim($_POST['urgency'] ?? '');
+    $date = trim($_POST['date'] ?? '');
+    $quantity = (int)($_POST['quantity'] ?? 0);
+    $size = trim($_POST['size'] ?? '');
 
     $allowedCategories = ['footwear', 'hats', 'accessory', 'clothes', 'coats'];
     $allowedUrgency = ['urgent', 'standard', 'winter'];
-    $allowedSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+    $allowedSizes = allowedSizesForCategory($category);
+
+    $validDate = false;
+    if ($date !== '') {
+        $dateObject = DateTime::createFromFormat('Y-m-d', $date);
+        $validDate = $dateObject && $dateObject->format('Y-m-d') === $date
+            && $date >= date('Y-m-d');
+    }
 
     if (
         in_array($category, $allowedCategories, true) &&
         in_array($urgency, $allowedUrgency, true) &&
         in_array($size, $allowedSizes, true) &&
         $description !== '' &&
+        $validDate &&
         $quantity > 0 &&
         $quantity <= 1000
     ) {
@@ -70,7 +136,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['publish'])) {
     exit();
 }
 
-// Retrieve this charity's requests
+// Retrieve this charity's requests.
 $requests = $conn->prepare(
     "SELECT * FROM clothing_needed
      WHERE charity_id = :id
@@ -79,7 +145,7 @@ $requests = $conn->prepare(
 $requests->execute([':id' => $charity['id']]);
 $myRequests = $requests->fetchAll(PDO::FETCH_ASSOC);
 
-// Retrieve donations for this charity
+// Retrieve donations for this charity.
 $donations = $conn->prepare(
     "SELECT d.*, cn.category
      FROM donation d
@@ -125,7 +191,7 @@ $myDonations = $donations->fetchAll(PDO::FETCH_ASSOC);
     <?php endif; ?>
 
     <?php if (isset($_GET['error'])): ?>
-        <div class="message error">Please check all the request details.</div>
+        <div class="message error">Please check all the request details and select a size that matches the category.</div>
     <?php endif; ?>
 
     <section class="panel">
@@ -134,7 +200,7 @@ $myDonations = $donations->fetchAll(PDO::FETCH_ASSOC);
         <form method="POST" class="form-grid">
 
             <label>Category
-                <select name="category" required>
+                <select name="category" id="requestCategory" required>
                     <option value="clothes">Clothes</option>
                     <option value="coats">Coats</option>
                     <option value="footwear">Footwear</option>
@@ -143,14 +209,14 @@ $myDonations = $donations->fetchAll(PDO::FETCH_ASSOC);
                 </select>
             </label>
 
-            <label>Clothing size
-                <select name="size" required>
-                    <option>XS</option>
-                    <option>S</option>
-                    <option>M</option>
-                    <option>L</option>
-                    <option>XL</option>
-                    <option>XXL</option>
+            <label>Size
+                <select name="size" id="requestSize" required>
+                    <option value="XS">XS</option>
+                    <option value="S">S</option>
+                    <option value="M">M</option>
+                    <option value="L">L</option>
+                    <option value="XL">XL</option>
+                    <option value="XXL">XXL</option>
                 </select>
             </label>
 
@@ -189,10 +255,10 @@ $myDonations = $donations->fetchAll(PDO::FETCH_ASSOC);
             <?php foreach ($myRequests as $request): ?>
                 <article class="history-card">
                     <strong><?= e($request['description']) ?></strong>
-                    <span><?= e($request['category']) ?></span>
+                    <span><?= e(ucfirst($request['category'])) ?></span>
                     <span>Quantity: <?= e($request['quantity']) ?></span>
                     <span>Size: <?= e($request['clothing_size']) ?></span>
-                    <span>Priority: <?= e($request['urgency']) ?></span>
+                    <span>Priority: <?= e(ucfirst($request['urgency'])) ?></span>
                     <span>Needed by: <?= e($request['date']) ?></span>
                 </article>
             <?php endforeach; ?>
@@ -207,7 +273,7 @@ $myDonations = $donations->fetchAll(PDO::FETCH_ASSOC);
         <?php if ($myDonations): ?>
             <?php foreach ($myDonations as $donation): ?>
                 <article class="history-card">
-                    <strong><?= e($donation['category']) ?></strong>
+                    <strong><?= e(ucfirst($donation['category'])) ?></strong>
                     <span><?= e($donation['description']) ?></span>
                     <span>Quantity: <?= e($donation['quantity']) ?></span>
                     <span>Size: <?= e($donation['clothing_size']) ?></span>
@@ -220,5 +286,36 @@ $myDonations = $donations->fetchAll(PDO::FETCH_ASSOC);
     </section>
 
 </main>
+
+<script>
+const categorySizeOptions = {
+    clothes: ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
+    coats: ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
+    footwear: ['EU 36', 'EU 37', 'EU 38', 'EU 39', 'EU 40', 'EU 41', 'EU 42', 'EU 43', 'EU 44', 'EU 45', 'EU 46'],
+    hats: ['One Size', 'S', 'M', 'L', 'XL'],
+    accessory: ['One Size']
+};
+
+const categorySelect = document.getElementById('requestCategory');
+const sizeSelect = document.getElementById('requestSize');
+
+function updateRequestSizes() {
+    const category = categorySelect.value;
+    const sizes = categorySizeOptions[category] || [];
+
+    sizeSelect.innerHTML = '';
+
+    sizes.forEach(function(size) {
+        const option = document.createElement('option');
+        option.value = size;
+        option.textContent = size;
+        sizeSelect.appendChild(option);
+    });
+}
+
+categorySelect.addEventListener('change', updateRequestSizes);
+updateRequestSizes();
+</script>
+
 </body>
 </html>
